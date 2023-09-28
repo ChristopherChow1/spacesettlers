@@ -4,6 +4,7 @@ import spacesettlers.actions.*;
 import spacesettlers.clients.TeamClient;
 import spacesettlers.game.AbstractGameAgent;
 import spacesettlers.graphics.SpacewarGraphics;
+import spacesettlers.graphics.TargetGraphics;
 import spacesettlers.objects.*;
 import spacesettlers.objects.powerups.SpaceSettlersPowerupEnum;
 import spacesettlers.objects.resources.ResourcePile;
@@ -37,7 +38,7 @@ public class ChowBeaconCollectorTeamClient extends TeamClient {
 	public Map<UUID, AbstractAction> getMovementStart(Toroidal2DPhysics space,
 			Set<AbstractActionableObject> actionableObjects) {
 		HashMap<UUID, AbstractAction> actions = new HashMap<UUID, AbstractAction>();
-		seeGraphics(space);
+		seeGraphics(space, actionableObjects);
 
 
 		// loop through each ship
@@ -157,24 +158,25 @@ public class ChowBeaconCollectorTeamClient extends TeamClient {
 		graphicsToAdd.clear();
 		return graphics;
 	}
-	public void seeGraphics(Toroidal2DPhysics space){
+	public void seeGraphics(Toroidal2DPhysics space, Set<AbstractActionableObject> actionableObjects){
 		Graph nodesGraph = new Graph();
 		Set<Beacon> beacons = space.getBeacons();
 
 		Set<Star> Stars = space.getStars();
+
 		int i = 0;
 		LineGraphics lines;
 		ArrayList<Edge> edgeArrayList = new ArrayList<Edge>();
-		//Beacon tempBeacon2;
+
+
 		for (Beacon tempBeacon : beacons){
 			nodesGraph.addNode(tempBeacon.getPosition());
-			graphicsToAdd.add(new StarGraphics(100, super.getTeamColor(), tempBeacon.getPosition()));
+			graphicsToAdd.add(new TargetGraphics(20, super.getTeamColor(), tempBeacon.getPosition()));
 			for (Beacon tempBeacon2 : beacons){
 				//I need to make a function to record edges.
-				nodesGraph.addEdge(tempBeacon.getPosition(),tempBeacon2.getPosition(), space);
-
-
-
+				Edge tempEdge = new Edge(tempBeacon.getPosition(),tempBeacon2.getPosition(), space);
+				edgeArrayList.add(tempEdge);
+				//nodesGraph.addEdge(tempEdge, space);// this is making my graph invisible why?
 
 				lines = new LineGraphics(tempBeacon.getPosition(), tempBeacon2.getPosition(), space.findShortestDistanceVector(tempBeacon.getPosition(), tempBeacon2.getPosition()));
 				graphicsToAdd.add(lines);
@@ -215,18 +217,19 @@ public class ChowBeaconCollectorTeamClient extends TeamClient {
 class Graph {
 	ArrayList<Vertex> nodes;
 	ArrayList<Edge> edges;
+
+
 	public Graph(){
 		this.nodes = new ArrayList<>();
 
 	}
-	public Vertex addNode(Position node) {
+	public void addNode(Position node) {
 		Vertex newVert = new Vertex(node);
 		this.nodes.add(newVert);
-		return newVert;
 	}
-	public void addEdge(Position vert1, Position vert2, Toroidal2DPhysics space){
-		edges.add(new Edge(vert1, vert2, space));
-
+	public void addEdge(Edge edge, Toroidal2DPhysics space){
+		Edge newEdge = new Edge(edge.getStart(), edge.getEnd(), space);
+		edges.add(newEdge);
 	}
 
 	public ArrayList<Edge> getEdges() {
