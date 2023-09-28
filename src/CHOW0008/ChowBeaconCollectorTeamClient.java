@@ -12,6 +12,8 @@ import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Position;
 import spacesettlers.graphics.LineGraphics;
 import spacesettlers.graphics.StarGraphics;
+import spacesettlers.utilities.Vector2D;
+
 import java.util.*;
 
 /**
@@ -73,11 +75,7 @@ public class ChowBeaconCollectorTeamClient extends TeamClient {
 				actions.put(actionable.getId(), new DoNothingAction());
 			}
 		}
-
 		return actions;
-
-
-
 	}
 
 
@@ -162,28 +160,65 @@ public class ChowBeaconCollectorTeamClient extends TeamClient {
 		Graph nodesGraph = new Graph();
 		Set<Beacon> beacons = space.getBeacons();
 
-		Set<Star> Stars = space.getStars();
+		Set<Star> stars = space.getStars();
 
 		int i = 0;
 		LineGraphics lines;
 		ArrayList<Edge> edgeArrayList = new ArrayList<Edge>();
 
 
-		for (Beacon tempBeacon : beacons){
-			nodesGraph.addNode(tempBeacon.getPosition());
-			graphicsToAdd.add(new TargetGraphics(20, super.getTeamColor(), tempBeacon.getPosition()));
-			for (Beacon tempBeacon2 : beacons){
-				//I need to make a function to record edges.
-				Edge tempEdge = new Edge(tempBeacon.getPosition(),tempBeacon2.getPosition(), space);
-				edgeArrayList.add(tempEdge);
-				//nodesGraph.addEdge(tempEdge, space);// this is making my graph invisible why?
+		for (AbstractObject actionable : actionableObjects){
+			if (actionable instanceof Ship){
+				Ship ship = (Ship) actionable;
+				Position shipPos = ship.getPosition();
+				nodesGraph.addNode(shipPos, space);
+				Vector2D currentVelocity = shipPos.getTranslationalVelocity();
+				RawAction action = null;
+				double angularVal = shipPos.getAngularVelocity();
+				for (Star tempStar : stars){
+					//connects the ship to the rest of the beacons
+					nodesGraph.addNode(tempStar.getPosition(), space);
+					Edge shipToStar = new Edge(shipPos, tempStar.getPosition(), space);
+					edgeArrayList.add(shipToStar);
+					lines = new LineGraphics(ship.getPosition(), tempStar.getPosition(), space.findShortestDistanceVector(ship.getPosition(), tempStar.getPosition()));
+					graphicsToAdd.add(lines);
+					/*
+					for (Beacon tempBeacon : beacons){
+						lines = new LineGraphics(tempBeacon.getPosition(), tempStar.getPosition(), space.findShortestDistanceVector(tempBeacon.getPosition(), tempStar.getPosition()));
+						graphicsToAdd.add(lines);
+						nodesGraph.addNode(tempBeacon.getPosition(),space);
+					}
+					*/
 
-				lines = new LineGraphics(tempBeacon.getPosition(), tempBeacon2.getPosition(), space.findShortestDistanceVector(tempBeacon.getPosition(), tempBeacon2.getPosition()));
-				graphicsToAdd.add(lines);
+					nodesGraph.addNode(tempStar.getPosition(), space);
+					//graphicsToAdd.add(new TargetGraphics(20, super.getTeamColor(), tempStar.getPosition()));
+					for (Star tempStar2 : stars){
+						//I need to make a function to record edges.
+						Edge tempEdge = new Edge(tempStar.getPosition(),tempStar2.getPosition(), space);
+						edgeArrayList.add(tempEdge);
+						//nodesGraph.addEdge(tempEdge, space);// this is making my graph invisible why?
+
+						lines = new LineGraphics(tempStar.getPosition(), tempStar2.getPosition(), space.findShortestDistanceVector(tempStar.getPosition(), tempStar2.getPosition()));
+						graphicsToAdd.add(lines);
+					}
+				}
+
+
+				//an attempt to do A* search
+				ArrayList<Position> listA = new ArrayList<Position>();
+				ArrayList<Position> ListB = new ArrayList<Position>();
+				int f, h, g;
+
+
+
 			}
 		}
 
+
+
 	}
+
+
 
 
 	@Override
@@ -223,8 +258,8 @@ class Graph {
 		this.nodes = new ArrayList<>();
 
 	}
-	public void addNode(Position node) {
-		Vertex newVert = new Vertex(node);
+	public void addNode(Position node, Toroidal2DPhysics space) {
+		Vertex newVert = new Vertex(node, space);
 		this.nodes.add(newVert);
 	}
 	public void addEdge(Edge edge, Toroidal2DPhysics space){
@@ -253,7 +288,7 @@ class Vertex {
 	Position vertex;
 	private ArrayList<Edge> edges;
 
-	Vertex(Position vertex) {
+	Vertex(Position vertex, Toroidal2DPhysics space) {
 		this.vertex = vertex;
 		this.edges = new ArrayList<Edge>();
 	}
