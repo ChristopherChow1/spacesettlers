@@ -4,17 +4,17 @@ import spacesettlers.actions.*;
 import spacesettlers.clients.TeamClient;
 import spacesettlers.game.AbstractGameAgent;
 import spacesettlers.graphics.SpacewarGraphics;
-import spacesettlers.graphics.TargetGraphics;
 import spacesettlers.objects.*;
 import spacesettlers.objects.powerups.SpaceSettlersPowerupEnum;
 import spacesettlers.objects.resources.ResourcePile;
 import spacesettlers.simulator.Toroidal2DPhysics;
 import spacesettlers.utilities.Position;
 import spacesettlers.graphics.LineGraphics;
-import spacesettlers.graphics.StarGraphics;
 import spacesettlers.utilities.Vector2D;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * Modified version of the beacon collector client.
@@ -26,7 +26,7 @@ import java.util.*;
 
 
 
-public class ChowBeaconCollectorTeamClient extends TeamClient {
+public class ChowProject2TeamClient extends TeamClient {
 	/**
 	 * Map of the beacon to which ship is aiming for it
 	 */
@@ -77,6 +77,8 @@ public class ChowBeaconCollectorTeamClient extends TeamClient {
 		}
 		return actions;
 	}
+
+
 
 
 	/**
@@ -161,34 +163,32 @@ public class ChowBeaconCollectorTeamClient extends TeamClient {
 		Set<Beacon> beacons = space.getBeacons();
 
 		Set<Star> stars = space.getStars();
-
+		List<Beacon> beaconList = new ArrayList<>(beacons);
+		Beacon beacon1 = beaconList.get(0);// pick one beacon as a goal. kinda random
 		int i = 0;
 		LineGraphics lines;
 		ArrayList<Edge> edgeArrayList = new ArrayList<Edge>();
+		ArrayList<Position> nodesList = new ArrayList<>();
 
 
 		for (AbstractObject actionable : actionableObjects){
 			if (actionable instanceof Ship){
 				Ship ship = (Ship) actionable;
 				Position shipPos = ship.getPosition();
-				nodesGraph.addNode(shipPos, space);
+				nodesGraph.addNode(shipPos, space);//have ship's position be the first entry
+				nodesList.add(shipPos);
 				Vector2D currentVelocity = shipPos.getTranslationalVelocity();
 				RawAction action = null;
 				double angularVal = shipPos.getAngularVelocity();
 				for (Star tempStar : stars){
-					//connects the ship to the rest of the beacons
+					//connects the ship to the rest of the stars
 					nodesGraph.addNode(tempStar.getPosition(), space);
+					nodesList.add(tempStar.getPosition());
 					Edge shipToStar = new Edge(shipPos, tempStar.getPosition(), space);
 					edgeArrayList.add(shipToStar);
 					lines = new LineGraphics(ship.getPosition(), tempStar.getPosition(), space.findShortestDistanceVector(ship.getPosition(), tempStar.getPosition()));
 					graphicsToAdd.add(lines);
-					/*
-					for (Beacon tempBeacon : beacons){
-						lines = new LineGraphics(tempBeacon.getPosition(), tempStar.getPosition(), space.findShortestDistanceVector(tempBeacon.getPosition(), tempStar.getPosition()));
-						graphicsToAdd.add(lines);
-						nodesGraph.addNode(tempBeacon.getPosition(),space);
-					}
-					*/
+
 
 					nodesGraph.addNode(tempStar.getPosition(), space);
 					//graphicsToAdd.add(new TargetGraphics(20, super.getTeamColor(), tempStar.getPosition()));
@@ -201,13 +201,63 @@ public class ChowBeaconCollectorTeamClient extends TeamClient {
 						lines = new LineGraphics(tempStar.getPosition(), tempStar2.getPosition(), space.findShortestDistanceVector(tempStar.getPosition(), tempStar2.getPosition()));
 						graphicsToAdd.add(lines);
 					}
+					///let one energy beacon be the goal.
+
+					lines = new LineGraphics(tempStar.getPosition(), beacon1.getPosition(), space.findShortestDistanceVector(tempStar.getPosition(), beacon1.getPosition()));
+					Edge starToBeacon = new Edge(tempStar.getPosition(), beacon1.getPosition(), space);
+					edgeArrayList.add(starToBeacon);
+					graphicsToAdd.add(lines);
 				}
+				nodesGraph.addNode(beacon1.getPosition(),space); // make sure that the beacon is the last entry.
+
+
+
+
 
 
 				//an attempt to do A* search
 				ArrayList<Position> listA = new ArrayList<Position>();
 				ArrayList<Position> ListB = new ArrayList<Position>();
-				int f, h, g;
+				ArrayList<Edge> connectedEdges = new ArrayList<Edge>();
+				Edge savedEdge = edgeArrayList.get(0);
+				Position goalNode = nodesList.get(nodesList.size()-1);// goal node
+				Position currentNode = shipPos;
+				ArrayList<Position> path = new ArrayList<Position>();
+				ArrayList<Edge> pathEdge = new ArrayList<Edge>();
+				int f = 0,  g;
+				double u = 1000000, w;
+
+				double heuristic = space.findShortestDistance(shipPos, goalNode);
+
+				//
+				while (currentNode != goalNode){
+					connectedEdges.clear();
+					listA.add(currentNode);
+
+					for (Edge tempEdge : edgeArrayList){
+						if (tempEdge.getStart() == currentNode){
+							connectedEdges.add(tempEdge);
+						}
+					}
+					for (Edge currentEdge : connectedEdges){
+						if (currentEdge.getDistance() < u) { // pick the smallest adjacent star.
+							u = currentEdge.getDistance();
+							savedEdge = currentEdge;
+						}
+					}
+
+					currentNode = savedEdge.getEnd();
+					path.add(currentNode);
+					pathEdge.add(savedEdge);
+					for (Edge steps : pathEdge){
+						lines = new LineGraphics(steps.getStart(), steps.getEnd(), space.findShortestDistanceVector(steps.getStart(), steps.getEnd()));
+						lines.setLineColor(Color.ORANGE);
+						graphicsToAdd.add(lines);
+						pathEdge.remove(0);
+					}
+				}
+				// Why is this returning one line? Only the shortest line.
+				// It took me way too long to get this to not break the previous graph.
 
 
 
@@ -280,6 +330,7 @@ class Graph {
 	public Vertex getNodeIndex(int index){
 		return this.nodes.get(index);
 	}
+
 
 
 }

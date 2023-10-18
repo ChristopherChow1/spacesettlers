@@ -1,7 +1,7 @@
 package spacesettlers.game;
 
-public class TicTacToe2DBoard extends AbstractGameBoard {
-	int[][] board;
+class TicTacToe2DBoard extends AbstractGameBoard {
+	public int[][] board;
 	static int empty = 0;
 	static int board_size = 3;
 

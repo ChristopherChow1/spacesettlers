@@ -9,7 +9,7 @@
 	<teamColorBlue>100</teamColorBlue>
 	
 	<!-- The name that shows up in the ladder -->
-	<ladderName>Chris Chow: "It just works"</ladderName>
+	<ladderName>(Chr)is it working? (C)how's it working?</ladderName>
 	
 	<!-- The number of ships in the team.  Note, if this is bigger than the maximum number of allowable ships per team, it is ignored -->
 	<numberInitialShipsInTeam>5</numberInitialShipsInTeam>

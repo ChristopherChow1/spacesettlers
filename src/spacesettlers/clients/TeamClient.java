@@ -33,12 +33,12 @@ abstract public class TeamClient {
 	/**
 	 * The name of the team
 	 */
-	String teamName;
+	public String teamName;
 	
 	/**
 	 * Optional:  if the agent needs to read in from a file, it can specify the path to it here 
 	 */
-	String knowledgeFile;
+	public String knowledgeFile;
 	
 	/**
 	 * Save the random number generator for future use

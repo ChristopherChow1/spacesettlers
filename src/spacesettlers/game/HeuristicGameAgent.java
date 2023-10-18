@@ -4,12 +4,15 @@ package spacesettlers.game;
  * Plays the game provided by the factory by calling the right actual heuristic agent
  */
 public class HeuristicGameAgent extends AbstractGameAgent{
-    HeuristicTicTacToe3DGameAgent heuristic3DTTTPlayer;
-    HeuristicTicTacToe2DGameAgent heuristic2DTTTPlayer;
+    //HeuristicTicTacToe3DGameAgent heuristic3DTTTPlayer;
+    //HeuristicTicTacToe2DGameAgent heuristic2DTTTPlayer;
+
+    CHOWMinimaxGameAgent MinimaxPlayer;
 
     public HeuristicGameAgent() {
-        heuristic2DTTTPlayer = new HeuristicTicTacToe2DGameAgent();
-        heuristic3DTTTPlayer = new HeuristicTicTacToe3DGameAgent();
+        //heuristic2DTTTPlayer = new HeuristicTicTacToe2DGameAgent();
+        //heuristic3DTTTPlayer = new HeuristicTicTacToe3DGameAgent();
+        MinimaxPlayer = new CHOWMinimaxGameAgent();
     }
 
     /**
@@ -21,11 +24,11 @@ public class HeuristicGameAgent extends AbstractGameAgent{
     @Override
     public AbstractGameAction getNextMove(AbstractGame game) {
         if (game.getClass() == TicTacToe2D.class) {
-            //System.out.println("Getting a move for the 2D game\n");
-            return heuristic2DTTTPlayer.getNextMove(game);
+            System.out.println("Getting a move for the 2D game\n");
+            return MinimaxPlayer.getNextMove(game);
         } else {
-            //System.out.println("Getting a move for the 3D game\n");
-            return heuristic3DTTTPlayer.getNextMove(game);
+            System.out.println("Getting a move for the 3D game\n");
+            return MinimaxPlayer.getNextMove(game);
         }
     }
 }
