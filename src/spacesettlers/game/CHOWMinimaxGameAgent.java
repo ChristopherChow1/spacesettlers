@@ -25,6 +25,7 @@ public class CHOWMinimaxGameAgent extends AbstractGameAgent {
 
 
 	public AbstractGameAction getNextMove(AbstractGame game) {
+		int bestScore = -10;
 		if (game.getClass() == TicTacToe2D.class){
 			TicTacToe2DBoard board = (TicTacToe2DBoard) game.getBoard();
 			System.out.println("Heuristic agent current state of the board is \n" + board);
