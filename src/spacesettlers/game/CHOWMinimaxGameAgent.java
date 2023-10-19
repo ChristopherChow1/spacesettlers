@@ -9,6 +9,41 @@ import spacesettlers.game.*;
  *
  */
 public class CHOWMinimaxGameAgent extends AbstractGameAgent {
+	int minimax(TicTacToe2DBoard board, int depth) {
+
+		int score = board.getWinningPlayer();
+		int best = -10;
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				TicTacToe2DAction action = new TicTacToe2DAction(i, j);
+				board.makeMove(action, this.player);
+				best = Math.max(best, minimax(board, depth + 1));
+				board.board[i][j] = board.empty;
+			}
+		}
+		return score;
+	}
+
+	public TicTacToe2DAction findBestMove(TicTacToe2DBoard board) {
+		int best = -10;
+		TicTacToe2DAction move = new TicTacToe2DAction(-1,-1);
+		for (int i = 0; i < 3; i++){
+			for (int j = 0; j < 3; j++){
+				if (board.board[i][j] == board.empty){
+					TicTacToe2DAction action = new TicTacToe2DAction(i, j);
+					board.makeMove(action, this.player);
+					int moveValue = minimax(board,0);
+					board.board[i][j] = board.empty;
+					if (moveValue > best){
+						move.row = i;
+						move.col = j;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
 
 	public CHOWMinimaxGameAgent() {
 	}
@@ -22,12 +57,29 @@ public class CHOWMinimaxGameAgent extends AbstractGameAgent {
 	 */
 
 
+/*
+	int evaluateBoard(TicTacToe2DBoard board){
+		int result = 0;
+		for (int i  = 0; i < 3; i++){
+			if (board.board[i][0]==board.board[i][1] && board.board[i][1]==board.board[i][2]){
+				if (board.getWinningPlayer() == this.player){
+					result = 10;
+				} else {
+					result = -10;
+				}
+			}
+		}
+		*/
 
 
+	int bestScore;
 	public AbstractGameAction getNextMove(AbstractGame game) {
 		int bestScore = -10;
+
 		if (game.getClass() == TicTacToe2D.class){
+
 			TicTacToe2DBoard board = (TicTacToe2DBoard) game.getBoard();
+
 			System.out.println("Heuristic agent current state of the board is \n" + board);
 
 			// check to see if the center is free
