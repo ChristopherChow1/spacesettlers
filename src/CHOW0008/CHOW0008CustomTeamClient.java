@@ -8,6 +8,7 @@ import spacesettlers.actions.PurchaseCosts;
 import spacesettlers.actions.PurchaseTypes;
 import spacesettlers.clients.TeamClient;
 import spacesettlers.game.AbstractGameAgent;
+import spacesettlers.game.HeuristicGameAgent;
 import spacesettlers.graphics.SpacewarGraphics;
 import spacesettlers.objects.AbstractActionableObject;
 import spacesettlers.objects.AbstractObject;
@@ -218,9 +219,17 @@ public class CHOW0008CustomTeamClient extends TeamClient {
 
 	//@Override
 	public Map<UUID, AbstractGameAgent> getGameSearch(Toroidal2DPhysics space,
-			Set<AbstractActionableObject> actionableObjects) {
-		// TODO Auto-generated method stub
-		return null;
+													  Set<AbstractActionableObject> actionableObjects) {
+		HeuristicGameAgent agent = new HeuristicGameAgent();
+
+		HashMap<UUID, AbstractGameAgent> actions = new HashMap<UUID, AbstractGameAgent>();
+		// loop through each ship
+		for (AbstractObject actionable :  actionableObjects) {
+			actions.put(actionable.getId(), agent);
+		}
+
+		return actions;
+
 	}
 	//getStarAction is based off of line 190 om PacifistFlagCollector
 	private AbstractAction getStarAction(Toroidal2DPhysics space, Ship ship){
