@@ -4,7 +4,7 @@ package CHOW0008;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.XStreamException;
 import spacesettlers.actions.*;
-import spacesettlers.clients.ExampleKnowledge;
+//import spacesettlers.clients.ExampleKnowledge;
 import spacesettlers.clients.TeamClient;
 import spacesettlers.game.AbstractGame;
 import spacesettlers.game.AbstractGameAgent;
@@ -37,7 +37,7 @@ public class CHOW0008GameAsteroidCollectorTeamClient extends TeamClient {
 	/**
 	 * Example knowledge used to show how to load in/save out to files for learning
 	 */
-	ExampleKnowledge myKnowledge;
+	//ExampleKnowledge myKnowledge;
 
 	/**
 	 * Assigns ships to asteroids and beacons, as described above
@@ -275,15 +275,15 @@ public class CHOW0008GameAsteroidCollectorTeamClient extends TeamClient {
 		aimingForBase = new HashMap<UUID, Boolean>();
 		justHitBase = new HashMap<UUID, Boolean>();
 		
-		XStream xstream = new XStream();
-		xstream.alias("ExampleKnowledge", ExampleKnowledge.class);
+		//XStream xstream = new XStream();
+		//xstream.alias("ExampleKnowledge", ExampleKnowledge.class);
 
 		try { 
-			myKnowledge = (ExampleKnowledge) xstream.fromXML(new File(knowledgeFile));
+			//myKnowledge = (ExampleKnowledge) xstream.fromXML(new File(knowledgeFile));
 		} catch (XStreamException e) {
 			// if you get an error, handle it other than a null pointer because
 			// the error will happen the first time you run
-			myKnowledge = new ExampleKnowledge();
+			//myKnowledge = new ExampleKnowledge();
 		}
 	}
 
@@ -294,19 +294,16 @@ public class CHOW0008GameAsteroidCollectorTeamClient extends TeamClient {
 	 */
 	@Override
 	public void shutDown(Toroidal2DPhysics space) {
-		XStream xstream = new XStream();
-		xstream.alias("ExampleKnowledge", ExampleKnowledge.class);
+		//XStream xstream = new XStream();
+		//xstream.alias("ExampleKnowledge", ExampleKnowledge.class);
 
 		try { 
 			// if you want to compress the file, change FileOuputStream to a GZIPOutputStream
-			xstream.toXML(myKnowledge, new FileOutputStream(new File(knowledgeFile)));
+			//xstream.toXML(myKnowledge, new FileOutputStream(new File(knowledgeFile)));
 		} catch (XStreamException e) {
 			// if you get an error, handle it somehow as it means your knowledge didn't save
 			// the error will happen the first time you run
-			myKnowledge = new ExampleKnowledge();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			myKnowledge = new ExampleKnowledge();
+			//myKnowledge = new ExampleKnowledge();
 		}
 	}
 

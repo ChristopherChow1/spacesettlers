@@ -8,100 +8,94 @@ import spacesettlers.game.*;
  *
  */
 public class CHOWMinimaxGameAgent extends AbstractGameAgent {
-	//int score = -1;
-
-	int minimax(TicTacToe2DBoard board, int depth) {
+	int score = -1;
+	int minimax(TicTacToe2DBoard board, int depth, boolean isMax) {
 		System.out.println("running minimax");
-		int score = board.getWinningPlayer();
-		if (score == 1){
-			System.out.println("returning player Score: "+ score);
+		score = board.getWinningPlayer();// the default value is 0
+		if (score == 1) {
+			System.out.println("returning player Score: " + score);
 			return 10;
 		}
-		if (score == 0){//this is returning -1 by default
-			System.out.println("returning opponent Score: "+ -1);
+		//this is looping the code
+		if (score == 0) {
+			System.out.println("returning opponent Score: " + score);
 			return -10;
 		}
-			int best = -10;
+		if (isMax){
+			int best = -1000;
 			for (int i = 0; i < 3; i++) {
 				for (int j = 0; j < 3; j++) {
 					//check if space is empty
-					if (board.board[i][j] == board.empty){
+					if (board.board[i][j] == board.empty) {
 						//make a move
 						TicTacToe2DAction action = new TicTacToe2DAction(i, j);
 						board.makeMove(action, this.player);
 
 						//recursively call minimax
-						best = Math.max(best, minimax(board, depth + 1));
 
-						//undo move
-						//board.board[i][j] = board.empty;
-					}
-				}
-			}
-			System.out.println("Best value in minimax: "+ best);
-			return best;
-		/*
-		else {
-			int best = 10;
-			for (int i = 0; i < 3; i++) {
-				for (int j = 0; j < 3; j++) {
-					//check if space is empty
-					if (board.board[i][j] == board.empty){
-						//make a move
-						TicTacToe2DAction action = new TicTacToe2DAction(i, j);
-						//board.makeMove(action, this.player);
+						best = Math.max(best, minimax(board, depth+1, !isMax));
 
-						//recursively call minimax
-						best = Math.min(best, minimax(board, depth + 1));
 
 						//undo move
 						board.board[i][j] = board.empty;
 					}
 				}
 			}
+			//System.out.println("Best value in minimax: " + best);
+			return best;
+		} else {
+			int best = 1000;
+			for (int i = 0; i < 3; i++) {
+				for (int j = 0; j < 3; j++) {
+					//check if space is empty
+					if (board.board[i][j] == board.empty) {
+						//make a move
+						//TicTacToe2DAction action = new TicTacToe2DAction(i, j);
+						//board.makeMove(action, this.player);
+
+						//recursively call minimax
+
+						best = Math.min(best, minimax(board, depth+1, !isMax));
+
+
+						//undo move
+						board.board[i][j] = board.empty;
+					}
+				}
+			}
+			//System.out.println("Best value in minimax: " + best);
 			return best;
 		}
 
-		 */
-
-
-
-
-
-
 	}
-
-
-
-	public TicTacToe2DAction findBestMove(TicTacToe2DBoard board) {
-		System.out.println("finding best move using minimax");
-		int best = -10;
+	TicTacToe2DAction findBestMove(TicTacToe2DBoard board) {
+		//System.out.println("finding best move using minimax");
+		int bestVal = -10;
 		//initialize move
 		TicTacToe2DAction move = new TicTacToe2DAction(-1,-1);
 		for (int i = 0; i < 3; i++){
 			for (int j = 0; j < 3; j++){
-				// check is space os empty
+				// check if space is empty
 				if (board.board[i][j] == board.empty){
 					//make move
 					move = new TicTacToe2DAction(i, j);
 					board.makeMove(move, this.player);
 					// use minimax
-					int moveValue = minimax(board,0);
-
+					int moveValue = minimax(board,0, false);
+					System.out.println("moveValue: " + moveValue);
 					//undo move
 					board.board[i][j] = board.empty;
-
 					//replace previous values with better values
-					if (moveValue > best){
-						move.row = i;
-						move.col = j;
-						best = moveValue;
+					if (moveValue > bestVal){
+						move = new TicTacToe2DAction(i, j);
+						board.makeMove(move, this.player);
+						bestVal = moveValue;
 					}
 				}
 			}
 		}
-		System.out.println("The best value is: " + best);
-		System.out.println("The best move is: ROW: " + move.getRow() + ", COL: "+ move.getCol());
+		//System.out.println("The best value is: " + bestVal);
+		//System.out.println("The best move is: ROW: " + move.getRow() + ", COL: "+ move.getCol());
 		return move;
 	}
 	public CHOWMinimaxGameAgent() {
@@ -116,8 +110,6 @@ public class CHOWMinimaxGameAgent extends AbstractGameAgent {
 	 */
 	//int bestScore;
 	public AbstractGameAction getNextMove(AbstractGame game) {
-		int bestScore = -10;
-
 		if (game.getClass() == TicTacToe2D.class){
 
 			TicTacToe2DBoard board = (TicTacToe2DBoard) game.getBoard();
@@ -130,13 +122,14 @@ public class CHOWMinimaxGameAgent extends AbstractGameAgent {
 
 			System.out.println("ROW: " + bestMove.getRow() + " COL: " + bestMove.getCol());
 			//System.out.println("Returning a null action for the following board\n");
-			System.out.println(board);
+			//System.out.println(board);
 			return null;
 
 		} else {
 			//this is the default 3x3x3 tictactoe agent
 			TicTacToe3DBoard board = (TicTacToe3DBoard) game.getBoard();
-			System.out.println("Heuristic agent current state of the board is \n" + board);
+			//System.out.println("Using the default 3d tictactoe");
+			//System.out.println("Heuristic agent current state of the board is \n" + board);
 
 			// check to see if the center is free
 			if (board.board[1][1][1] == board.empty) {
@@ -179,7 +172,6 @@ public class CHOWMinimaxGameAgent extends AbstractGameAgent {
 						}
 					}
 				}
-
 			}
 			return null;
 		}
