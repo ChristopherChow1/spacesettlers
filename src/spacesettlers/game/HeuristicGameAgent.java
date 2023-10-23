@@ -7,12 +7,12 @@ public class HeuristicGameAgent extends AbstractGameAgent{
     //HeuristicTicTacToe3DGameAgent heuristic3DTTTPlayer;
     //HeuristicTicTacToe2DGameAgent heuristic2DTTTPlayer;
 
-    CHOWMinimaxGameAgent MinimaxPlayer;
+    CHOWMinimax2 MinimaxPlayer;
 
     public HeuristicGameAgent() {
         //heuristic2DTTTPlayer = new HeuristicTicTacToe2DGameAgent();
         //heuristic3DTTTPlayer = new HeuristicTicTacToe3DGameAgent();
-        MinimaxPlayer = new CHOWMinimaxGameAgent();
+        MinimaxPlayer = new CHOWMinimax2();
     }
 
     /**

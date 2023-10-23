@@ -48,9 +48,15 @@ public class CHOW0008CustomTeamClient extends TeamClient {
 	HashMap <UUID, Ship> starToShipMap;
 	HashMap <UUID, Ship> asteroidToShipMap;
 	HashMap<UUID, Boolean> goingForCore;
+
+	HashMap <UUID, Boolean> aimingForBase;
+	HashMap <UUID, Boolean> justHitBase;
+
 	//@Override
 	public void initialize(Toroidal2DPhysics space) {
-		// TODO Auto-generated method stub
+		asteroidToShipMap = new HashMap<UUID, Ship>();
+		aimingForBase = new HashMap<UUID, Boolean>();
+		justHitBase = new HashMap<UUID, Boolean>();
 
 	}
 
@@ -67,19 +73,22 @@ public class CHOW0008CustomTeamClient extends TeamClient {
 	//below is scuffed spaghetti code
 	//Bethesda: "It just works."
 	public Map<UUID, AbstractAction> getMovementStart(Toroidal2DPhysics space,
-			Set<AbstractActionableObject> actionableObjects) {
+													  Set<AbstractActionableObject> actionableObjects) {
 		HashMap<UUID, AbstractAction> actions = new HashMap<UUID, AbstractAction>();
-		Ship starShip;
-		//starShip = getStarCollector(space, actionableObjects);
-		for (AbstractObject actionable : actionableObjects) {
-				if (actionable instanceof Ship) {
-					starShip = (Ship) actionable;
-					AbstractAction action;
-					Star star = findNearestStar(space, starShip);//finds nearest star
-					action = new MoveToObjectAction(space, starShip.getPosition(), star);// command to move ship to star
-					actions.put(starShip.getId(), action);
-					//action = getStarAction(space, starShip);
-				}
+
+		// loop through each ship
+		for (AbstractObject actionable :  actionableObjects) {
+			if (actionable instanceof Ship) {
+				Ship ship = (Ship) actionable;
+
+				AbstractAction action;
+				action = getAsteroidCollectorAction(space, ship);
+				actions.put(ship.getId(), action);
+
+			} else {
+				// it is a base.  Heuristically decide when to use the shield (TODO)
+				actions.put(actionable.getId(), new DoNothingAction());
+			}
 		}
 		return actions;
 	}
@@ -93,18 +102,86 @@ public class CHOW0008CustomTeamClient extends TeamClient {
 		}
 		return null;
 	}
-	private Star findNearestStar(Toroidal2DPhysics space, Ship ship){
+	private Beacon pickNearestBeacon(Toroidal2DPhysics space, Ship ship) {
+		// get the current beacons
+		Set<Beacon> beacons = space.getBeacons();
+
+		Beacon closestBeacon = null;
+		double bestDistance = Double.POSITIVE_INFINITY;
+
+		for (Beacon beacon : beacons) {
+			double dist = space.findShortestDistance(ship.getPosition(), beacon.getPosition());
+			if (dist < bestDistance) {
+				bestDistance = dist;
+				closestBeacon = beacon;
+			}
+		}
+
+		return closestBeacon;
+	}
+	private AbstractAction getAsteroidCollectorAction(Toroidal2DPhysics space,
+													  Ship ship) {
+		AbstractAction current = ship.getCurrentAction();
+		Position currentPosition = ship.getPosition();
+
+		// aim for a beacon if there isn't enough energy
+		if (ship.getEnergy() < 2000) {
+			Beacon beacon = pickNearestBeacon(space, ship);
+			AbstractAction newAction = null;
+			// if there is no beacon, then just skip a turn
+			if (beacon == null) {
+				newAction = new DoNothingAction();
+			} else {
+				newAction = new MoveToObjectAction(space, currentPosition, beacon);
+			}
+			aimingForBase.put(ship.getId(), false);
+			return newAction;
+		}
+
+		// if the ship has enough resourcesAvailable, take it back to base
+		if (ship.getResources().getTotal() > 500) {
+			Base base = findNearestBase(space, ship);
+			AbstractAction newAction = new MoveToObjectAction(space, currentPosition, base);
+			aimingForBase.put(ship.getId(), true);
+			return newAction;
+		}
+
+		// otherwise aim for the nearest gaming asteroid
+		if (current == null || current.isMovementFinished(space) ||
+				(justHitBase.containsKey(ship.getId()) && justHitBase.get(ship.getId()))) {
+			justHitBase.put(ship.getId(), false);
+			aimingForBase.put(ship.getId(), false);
+			Asteroid asteroid = pickHighestValueNearestFreeAsteroidGamingIfPossible(space, ship);
+
+			AbstractAction newAction = null;
+
+			if (asteroid != null) {
+				asteroidToShipMap.put(asteroid.getId(), ship);
+				newAction = new MoveToObjectAction(space, currentPosition, asteroid,
+						asteroid.getPosition().getTranslationalVelocity());
+			}
+
+			return newAction;
+		}
+
+		return ship.getCurrentAction();
+	}
+	private Base findNearestBase(Toroidal2DPhysics space, Ship ship) {
 		double minDistance = Double.MAX_VALUE;
-		Star nearestStar = null;
-			for (Star star : space.getStars()){
-				double dist = space.findShortestDistance(ship.getPosition(), star.getPosition());
-				if (dist < minDistance){
+		Base nearestBase = null;
+
+		for (Base base : space.getBases()) {
+			if (base.getTeamName().equalsIgnoreCase(ship.getTeamName())) {
+				double dist = space.findShortestDistance(ship.getPosition(), base.getPosition());
+				if (dist < minDistance) {
 					minDistance = dist;
-					nearestStar = star;
+					nearestBase = base;
 				}
 			}
-			return nearestStar;
+		}
+		return nearestBase;
 	}
+
 	private Asteroid pickHighestValueNearestFreeAsteroidGamingIfPossible(Toroidal2DPhysics space, Ship ship) {
 		Set<Asteroid> asteroids = space.getAsteroids();
 		int bestMoney = Integer.MIN_VALUE;
@@ -187,8 +264,34 @@ public class CHOW0008CustomTeamClient extends TeamClient {
 
 	//@Override
 	public void getMovementEnd(Toroidal2DPhysics space, Set<AbstractActionableObject> actionableObjects) {
-		// TODO Auto-generated method stub
-		
+		ArrayList<Asteroid> finishedAsteroids = new ArrayList<Asteroid>();
+
+		for (UUID asteroidId : asteroidToShipMap.keySet()) {
+			Asteroid asteroid = (Asteroid) space.getObjectById(asteroidId);
+			if (asteroid != null && (!asteroid.isAlive() || asteroid.isMoveable())) {
+				finishedAsteroids.add(asteroid);
+				//System.out.println("Removing asteroid from map");
+			}
+		}
+
+		for (Asteroid asteroid : finishedAsteroids) {
+			asteroidToShipMap.remove(asteroid.getId());
+		}
+
+		// check to see who bounced off bases
+		for (UUID shipId : aimingForBase.keySet()) {
+			if (aimingForBase.get(shipId)) {
+				Ship ship = (Ship) space.getObjectById(shipId);
+				if (ship.getResources().getTotal() == 0 ) {
+					// we hit the base (or died, either way, we are not aiming for base now)
+					//System.out.println("Hit the base and dropped off resources");
+					aimingForBase.put(shipId, false);
+					justHitBase.put(shipId, true);
+				}
+			}
+		}
+
+
 	}
 
 	//@Override
